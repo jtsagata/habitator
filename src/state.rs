@@ -74,9 +74,8 @@ fn default_env_dirs() -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use super::EnvChangeRequest;
+
     #[test]
     fn test_default() {
         let empty = EnvChangeRequest::default();
