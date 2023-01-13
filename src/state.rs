@@ -88,17 +88,18 @@ mod tests {
 
     #[test]
     fn test_ser() {
-        env::set_var("PATH", "p1:p2");
-        let mut changes = EnvChangeRequest::default();
-        changes
-            .push_after("l1")
-            .push_after("l2")
-            .push_before("f1")
-            .push_delete("p2");
-        let as_ron = ron::to_string(&changes);
-        assert_eq!(
+        temp_env::with_var("PATH", Some("p1:p2"), || {
+            let mut changes = EnvChangeRequest::default();
+            changes
+                .push_after("l1")
+                .push_after("l2")
+                .push_before("f1")
+                .push_delete("p2");
+            let as_ron = ron::to_string(&changes);
+            assert_eq!(
             as_ron,
             Ok("(environment:\"PATH\",before_paths:[\"f1\"],after_paths:[\"l1\",\"l2\"],delete_paths:[\"p2\"])".to_string()));
+        });
     }
 
     #[test]
@@ -156,61 +157,67 @@ mod tests {
 
     #[test]
     fn test_populate() {
-        env::set_var("PATH", "p1:p2");
-        let mut changes = EnvChangeRequest::default();
-        let changes = changes
-            .push_after("l1")
-            .push_after("l2")
-            .push_before("f1")
-            .push_delete("p2");
-        let path_txt = changes.process();
-        assert_eq!(path_txt.join(":"), "f1:p1:l1:l2".to_string());
+        temp_env::with_var("PATH", Some("p1:p2"), || {
+            let mut changes = EnvChangeRequest::default();
+            let changes = changes
+                .push_after("l1")
+                .push_after("l2")
+                .push_before("f1")
+                .push_delete("p2");
+            let path_txt = changes.process();
+            assert_eq!(path_txt.join(":"), "f1:p1:l1:l2".to_string());
+        });
     }
 
     #[test]
     fn test_populate_uniq() {
-        env::set_var("PATH", "p1:p2:p1:p2");
-        let changes = EnvChangeRequest::default();
-        let path_txt = changes.process_uniq();
-        assert_eq!(path_txt.join(":"), "p1:p2".to_string());
+        temp_env::with_var("PATH", Some("p1:p2:p1:p2"), || {
+            let changes = EnvChangeRequest::default();
+            let path_txt = changes.process_uniq();
+            assert_eq!(path_txt.join(":"), "p1:p2".to_string());
+        });
     }
 
     #[test]
     fn test_populate_empty_var() {
-        env::set_var("PATH", "");
-        let mut changes = EnvChangeRequest::default();
-        let changes = changes
-            .push_after("l1")
-            .push_after("l2")
-            .push_before("f1")
-            .push_delete("p2")
-            .set_var("__HABITATOR__");
-        let path_txt = changes.process();
-        assert_eq!(path_txt.join(":"), "f1:l1:l2".to_string());
-        assert_eq!(changes.environment, "__HABITATOR__".to_string())
+        temp_env::with_var("PATH", Some(""), || {
+            let mut changes = EnvChangeRequest::default();
+            let changes = changes
+                .push_after("l1")
+                .push_after("l2")
+                .push_before("f1")
+                .push_delete("p2")
+                .set_var("__HABITATOR__");
+            let path_txt = changes.process();
+            assert_eq!(path_txt.join(":"), "f1:l1:l2".to_string());
+            assert_eq!(changes.environment, "__HABITATOR__".to_string())
+        });
     }
 
     #[test]
     fn test_populate_skip_empty() {
-        env::set_var("PATH", "p1::p2");
-        let changes = EnvChangeRequest::default();
-        let path_txt = changes.process();
-        assert_eq!(path_txt.join(":"), "p1:p2".to_string());
+        temp_env::with_var("PATH", Some("p1::p2"), || {
+            let changes = EnvChangeRequest::default();
+            let path_txt = changes.process();
+            assert_eq!(path_txt.join(":"), "p1:p2".to_string());
+        });
     }
 
     #[test]
-    fn test_populate_strip1() {
-        env::set_var("PATH", "p1: p2 :p3");
-        let changes = EnvChangeRequest::default();
-        let path_txt = changes.process();
-        assert_eq!(path_txt.join(":"), "p1:p2:p3".to_string());
+    fn test_populate_strip_space() {
+        temp_env::with_var("PATH", Some("p1: p2 :p3"), || {
+            let changes = EnvChangeRequest::default();
+            let path_txt = changes.process();
+            assert_eq!(path_txt.join(":"), "p1:p2:p3".to_string());
+        });
     }
 
     #[test]
-    fn test_populate_strip2() {
-        env::set_var("PATH", "My Documents: p2 :p3");
-        let changes = EnvChangeRequest::default();
-        let path_txt = changes.process();
-        assert_eq!(path_txt.join(":"), "My Documents:p2:p3".to_string());
+    fn test_populate_strip_my_documents() {
+        temp_env::with_var("PATH", Some("My Documents: p2 :p3"), || {
+            let changes = EnvChangeRequest::default();
+            let path_txt = changes.process();
+            assert_eq!(path_txt.join(":"), "My Documents:p2:p3".to_string());
+        });
     }
 }

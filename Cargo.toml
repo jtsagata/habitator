@@ -17,3 +17,4 @@ toml = "0.5.10"
 [dev-dependencies]
 predicates = "2.1.5"
 assert_cmd = "2.0.8"
+temp-env = "0.3.1"
