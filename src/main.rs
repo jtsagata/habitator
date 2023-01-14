@@ -9,7 +9,7 @@ pub struct CliOpts {
     mode: CliMode,
 }
 
-impl<'a> Default for CliOpts {
+impl Default for CliOpts {
     fn default() -> Self {
         Self {
             is_env_set: false,
